@@ -12,6 +12,8 @@ def build_system_prompt(pharmacy: dict | None, knowledge_chunks: list) -> str:
     and relevant product knowledge. Keeping all of these in one place makes it
     easy to see exactly what the agent knows and why.
     """
+    print(f"[Prompt] assembling system prompt ({len(knowledge_chunks)} RAG chunks injected)")
+
     # 1. Role definition
     role = (
         f"You are {AGENT_NAME}, a warm and knowledgeable sales agent at {COMPANY_NAME}. "
@@ -28,7 +30,11 @@ def build_system_prompt(pharmacy: dict | None, knowledge_chunks: list) -> str:
         "3. If asked something out of scope, acknowledge it honestly and redirect to what you can help with.\n"
         "4. This is a phone call -- be concise. No bullet points, no long lists.\n"
         "5. Always be steering the conversation toward booking a demo or scheduling a callback.\n"
-        "6. When you know the pharmacy's name, use it naturally -- not on every sentence, just where it fits."
+        "6. When you know the pharmacy's name, use it naturally -- not on every sentence, just where it fits.\n"
+        "7. Follow the caller's lead. Do not run the conversation like a form. If the caller "
+        "jumps to scheduling, go there. Weave in qualifying questions naturally when there "
+        "is an opening, or ask them briefly at the end framed as helping the team prepare. "
+        "Never ask more than one question per turn."
     )
 
     # 3. Pharmacy context
@@ -64,12 +70,19 @@ def get_llm_response(messages: list) -> str:
     """
     try:
         client = OpenAI(api_key=OPENAI_API_KEY)
+
+        # Production: caller input passes through Lakera Guard before reaching the LLM.
+        # See lakera.ai -- detects prompt injection from adversarial callers.
+        # if lakera_client.moderate(user_input).flagged: return safe_fallback_response()
+
+        print(f"[LLM] sending prompt to {OPENAI_MODEL}... ", end="", flush=True)
         completion = client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=messages,
             temperature=OPENAI_TEMPERATURE,
             max_tokens=OPENAI_MAX_TOKENS,
         )
+        print("response received")
         return completion.choices[0].message.content
     except Exception as e:
         print(f"[ERROR] LLM call failed: {e}")

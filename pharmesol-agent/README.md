@@ -52,6 +52,29 @@ OPENAI_API_KEY = "sk-..."
 
 ---
 
+## Connection to design document
+
+- `knowledge_base.py` is the RAG layer from the design document. In production this
+  is semantic retrieval over embedded product docs stored in pgvector. The function
+  signature of `retrieve_relevant_chunks()` is intentionally production-compatible.
+
+- `pharmacy_api.py` simulates the CRM lookup that fires on call start. In production
+  this is a HubSpot or Salesforce lookup returning the full lead record including
+  funnel stage and previous interaction notes.
+
+- `tools.py` `mock_log_lead()` simulates CRM write-back after each call. This closes
+  the context loop -- future calls benefit from accumulated lead history.
+
+- Lakera Guard sits between caller input and the LLM. In production every caller
+  utterance passes through Lakera before the LLM sees it, catching prompt injection
+  attempts from adversarial callers.
+
+- The two-memory-layer design (CRM for structured data + vector DB for past transcript
+  context) is partially implemented: CRM lookup is live, vector DB retrieval is noted
+  in `knowledge_base.py` as the production path.
+
+---
+
 ## If I had 3 more hours
 
 The most impactful thing I'd add is a voice layer. Right now this is a text simulation, but Pharmesol is a phone product -- the real value is in how Jane sounds on the phone, not how she reads in a terminal. I'd connect Twilio's Programmable Voice API to receive inbound calls, pipe the audio to Deepgram for real-time speech-to-text, run the transcript through the same agent logic, and send the response text to ElevenLabs for synthesis before playing it back. The agent loop barely changes -- the voice layer is just I/O wrapping the same core logic.

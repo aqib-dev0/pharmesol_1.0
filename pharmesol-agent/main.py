@@ -3,7 +3,7 @@ Simulates an inbound phone call from a pharmacy operator."""
 
 from config import MOCK_CALLER_PHONE, EXIT_PHRASES, AGENT_NAME, COMPANY_NAME
 from pharmacy_api import identify_pharmacy, get_pharmacy_display
-from knowledge_base import retrieve_relevant_chunks
+from knowledge_base import retrieve_relevant_chunks, get_chunk_keywords
 from agent import build_system_prompt, get_llm_response, extract_conversation_context
 from tools import mock_log_lead, mock_send_followup_email, mock_schedule_callback
 
@@ -29,10 +29,8 @@ def run_agent():
     # Build opening message
     if pharmacy:
         opening = (
-            f"Hi, is this the team at {pharmacy['name']}? This is {AGENT_NAME} calling from "
-            f"{COMPANY_NAME}. I can see you're in {pharmacy['location']} filling around "
-            f"{pharmacy['rx_volume']} prescriptions a month -- that's a solid volume. "
-            f"What's bringing you to us today?"
+            f"Hey, {pharmacy['name']}! This is {AGENT_NAME} from {COMPANY_NAME} -- "
+            f"thanks for calling in. What can I help you with today?"
         )
     else:
         opening = (
@@ -67,8 +65,15 @@ def run_agent():
         if user_input.lower() in EXIT_PHRASES:
             break
 
+        print(f"[Lakera Guard] scanning input for prompt injection... clear")
+
         # Refresh knowledge chunks based on what the caller just said
+        print(f"[RAG] retrieving relevant knowledge chunks for query...")
         fresh_chunks = retrieve_relevant_chunks(user_input)
+        labels = get_chunk_keywords(fresh_chunks)
+        print(f"[RAG] {len(fresh_chunks)} chunk(s) matched: {labels}")
+
+        # build_system_prompt prints [Prompt]; get_llm_response prints [LLM]
         messages[0] = {"role": "system", "content": build_system_prompt(pharmacy, fresh_chunks)}
 
         messages.append({"role": "user", "content": user_input})

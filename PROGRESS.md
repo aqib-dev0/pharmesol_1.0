@@ -3,7 +3,7 @@
 
 ---
 
-## Status: COMPLETE
+## Status: COMPLETE (iteration 2 -- terminal visibility + production annotations added)
 
 ---
 

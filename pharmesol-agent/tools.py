@@ -7,8 +7,8 @@ For this simulation they log to stdout."""
 def mock_send_followup_email(pharmacy_name: str, contact_name: str, email: str, summary: str) -> dict:
     """Send a follow-up email after the call.
 
-    In production: POST to the SendGrid API with a templated email,
-    CC the assigned account executive, and log the send event to HubSpot.
+    In production: calls SendGrid API with a templated email. Template selected based on
+    call outcome -- demo booked, info requested, or escalation triggered.
     """
     print("[EMAIL QUEUED]")
     print(f"  To: {contact_name} <{email}>")
@@ -22,8 +22,8 @@ def mock_send_followup_email(pharmacy_name: str, contact_name: str, email: str, 
 def mock_schedule_callback(pharmacy_name: str, contact_name: str, preferred_time: str, notes: str) -> dict:
     """Schedule a follow-up callback with the pharmacy.
 
-    In production: create a Google Calendar event via the Calendar API,
-    send a Calendly invite link to the contact, and update the HubSpot deal stage.
+    In production: creates a Google Calendar event via Calendly API. Sends confirmation
+    to both the pharmacy contact and the assigned Pharmesol sales rep.
     """
     print("[CALLBACK SCHEDULED]")
     print(f"  Pharmacy: {pharmacy_name}")
@@ -37,9 +37,10 @@ def mock_schedule_callback(pharmacy_name: str, contact_name: str, preferred_time
 def mock_log_lead(pharmacy_name: str, rx_volume: str, pain_points: str, outcome: str) -> dict:
     """Log the lead and call outcome to the CRM.
 
-    In production: POST to the HubSpot Contacts and Deals API,
-    tag the lead with the appropriate lifecycle stage, and trigger
-    the assigned rep's follow-up task queue.
+    In production: writes a structured lead record to HubSpot or Salesforce after every call.
+    This closes the context loop -- next time this pharmacy calls, the CRM lookup returns
+    enriched data including pain points and previous conversation outcomes. Also triggers
+    a Slack alert to the assigned sales rep.
     """
     print("[LEAD LOGGED]")
     print(f"  Pharmacy: {pharmacy_name}")

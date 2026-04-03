@@ -24,12 +24,15 @@ def _normalize_phone(phone: str) -> str:
 
 def identify_pharmacy(phone_number: str) -> dict | None:
     """Look up a pharmacy by phone number. Returns the raw API dict or None."""
+    print(f"[CRM Lookup] searching for phone: {phone_number}...", end=" ", flush=True)
     normalized_input = _normalize_phone(phone_number)
     pharmacies = fetch_all_pharmacies()
     for pharmacy in pharmacies:
         record_phone = _normalize_phone(pharmacy.get("phone", ""))
         if record_phone and record_phone == normalized_input:
+            print(f"match found: {pharmacy.get('name', 'unknown')}")
             return pharmacy
+    print("no match -- unknown caller")
     return None
 
 

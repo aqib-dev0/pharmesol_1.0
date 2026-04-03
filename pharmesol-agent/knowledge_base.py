@@ -2,6 +2,14 @@
 Simulates RAG retrieval. In production this would be a vector DB
 with embedded chunks from product docs, case studies, and FAQs."""
 
+# RAG LAYER (simulated)
+# In production: chunks are embedded with OpenAI embeddings and stored in pgvector
+# or Pinecone. Retrieval is semantic (cosine similarity) rather than keyword scoring.
+# retrieve_relevant_chunks() has a production-compatible signature -- in production
+# the internals swap keyword matching for an embedding lookup, nothing else changes.
+# The knowledge base is updated when Pharmesol adds integrations, changes onboarding
+# timelines, or publishes new case study results.
+
 KNOWLEDGE_CHUNKS = [
     {
         "keywords": ["pharmesol", "jane", "ai agent", "what", "does", "who", "product"],
@@ -107,6 +115,17 @@ KNOWLEDGE_CHUNKS = [
         ),
     },
 ]
+
+
+def get_chunk_keywords(chunks: list) -> str:
+    """Returns topic labels for matched chunks. Used for terminal output only."""
+    labels = []
+    for chunk_content in chunks:
+        for chunk in KNOWLEDGE_CHUNKS:
+            if chunk["content"] == chunk_content:
+                labels.append(chunk["keywords"][0])
+                break
+    return ", ".join(labels) if labels else "default chunks"
 
 
 def retrieve_relevant_chunks(query: str, top_n: int = 3) -> list:
