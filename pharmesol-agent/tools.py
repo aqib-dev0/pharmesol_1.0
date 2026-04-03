@@ -34,6 +34,22 @@ def mock_schedule_callback(pharmacy_name: str, contact_name: str, preferred_time
     return {"status": "scheduled", "pharmacy": pharmacy_name, "time": preferred_time}
 
 
+def mock_escalate_to_human(pharmacy_name: str, contact_name: str, notes: str) -> dict:
+    """Escalate the call to a human sales rep.
+
+    In production: fires a Slack alert to the assigned rep's channel with full
+    call context, transfers the live call via Twilio, and updates the HubSpot deal
+    stage to 'Escalated'. The rep picks up with the context already in front of them.
+    """
+    print("[ESCALATION TRIGGERED]")
+    print(f"  Pharmacy: {pharmacy_name}")
+    print(f"  Contact: {contact_name}")
+    print(f"  Reason: caller requested human / out-of-scope question")
+    print(f"  Notes: {notes}")
+    print()
+    return {"status": "escalated", "pharmacy": pharmacy_name}
+
+
 def mock_log_lead(pharmacy_name: str, rx_volume: str, pain_points: str, outcome: str) -> dict:
     """Log the lead and call outcome to the CRM.
 

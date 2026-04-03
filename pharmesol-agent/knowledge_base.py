@@ -148,3 +148,34 @@ def retrieve_relevant_chunks(query: str, top_n: int = 3) -> list:
         return [chunk["content"] for chunk in KNOWLEDGE_CHUNKS[:2]]
 
     return [content for _, content in scored[:top_n]]
+
+
+# ------- Vector store (simulated long-term memory) -------
+# In production: pgvector or Pinecone, keyed by phone → embedded transcript chunks.
+# Semantic search retrieves the most contextually relevant prior call moments,
+# not just the most recent. Updated after every call.
+
+MOCK_VECTOR_STORE: dict = {}  # phone_number -> list[str] transcript chunks
+
+
+def vector_search_prior_context(phone: str) -> list:
+    """Return stored transcript chunks for a caller phone number.
+
+    In production: embed the current query, run cosine similarity against all
+    stored chunks for this caller, return top-k by relevance score.
+    """
+    return MOCK_VECTOR_STORE.get(phone, [])
+
+
+def store_transcript_chunks(phone: str, messages: list) -> int:
+    """Chunk and store the call transcript for future semantic retrieval.
+    Returns the number of chunks stored.
+
+    In production: split transcript into ~200-token chunks, embed each with
+    text-embedding-3-small, upsert into pgvector with phone + timestamp metadata.
+    """
+    turns = [m["content"] for m in messages if m["role"] in ("user", "assistant")]
+    # Pair up turns into context windows (user + assistant = one chunk)
+    chunks = [" | ".join(turns[i:i + 2]) for i in range(0, len(turns), 2)]
+    MOCK_VECTOR_STORE[phone] = chunks
+    return len(chunks)
